@@ -36,8 +36,10 @@ local function get_v(v)
 	return math.sqrt(v.x ^ 2 + v.z ^ 2)
 end
 
+
+
 --
--- Boat entity
+-- plane entity
 --
 
 local plane = {
@@ -54,9 +56,11 @@ local plane = {
 
 	driver = nil,
 	v = 0,
+	vel_y = 0,
 	last_v = 0,
 	removed = false,
-	auto = false
+	lift = 0.0,
+	
 }
 
 
@@ -156,23 +160,20 @@ function plane.on_step(self, dtime)
     
 
     self.v = get_v(self.object:get_velocity()) * math.sign(self.v)
+	self.vel_y = self.object:get_velocity().y 
+	
 	if self.driver then
 		local driver_objref = minetest.get_player_by_name(self.driver)
 		if driver_objref then
 			local ctrl = driver_objref:get_player_control()
-			if ctrl.up and ctrl.down then
-				if not self.auto then
-					self.auto = true
-					minetest.chat_send_player(self.driver, "Boat cruise mode on")
-				end
-			elseif ctrl.down then
-				self.v = self.v - dtime * 2.0
-				if self.auto then
-					self.auto = false
-					minetest.chat_send_player(self.driver, S("Boat cruise mode off"))
-				end
+
+			if ctrl.down then
+				-- decelerate
+				self.v = self.v - dtime * 3.0
+				
 			elseif ctrl.up or self.auto then
-				self.v = self.v + dtime * 2.0
+				--accellerate
+				self.v = self.v + dtime * 3.0
 			end
 			if ctrl.left then
 				if self.v < -0.001 then
@@ -187,50 +188,84 @@ function plane.on_step(self, dtime)
 					self.object:set_yaw(self.object:get_yaw() - dtime * 0.9)
 				end
 			end
+			if ctrl.jump then
+				self.lift = self.lift + self.v * dtime * 30
+			elseif ctrl.sneak then
+				self.lift = self.lift - dtime * 30
+			end
+			if self.v < .001 then 
+				self.lift = 0
+			end
+
 		end
 	end
 	local velo = self.object:get_velocity()
+	--make sure its stopped
 	if not self.driver and
 			self.v == 0 and velo.x == 0 and velo.y == 0 and velo.z == 0 then
 		self.object:set_pos(self.object:get_pos())
 		return
 	end
-	-- We need to preserve velocity sign to properly apply drag force
-	-- while moving backward
-	local drag = dtime * math.sign(self.v) * (0.01 + 0.0796 * self.v * self.v)
-	-- If drag is larger than velocity, then stop horizontal movement
-	if math.abs(self.v) <= math.abs(drag) then
-		self.v = 0
-	else
-		self.v = self.v - drag
-	end
+
 
 	local p = self.object:get_pos()
 	p.y = p.y - 0.5 --?
 	local new_velo
 	local new_acce = {x = 0, y = 0, z = 0}
 	if not is_water(p) then
-		local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
-		if (not nodedef) or nodedef.walkable then
+
+		-- We need to preserve velocity sign to properly apply drag force
+		-- while moving backward
+		local drag = dtime * math.sign(self.v) * (0.01 + 0.045 * self.v * self.v)
+		-- If drag is larger than velocity, then stop horizontal movement
+		if math.abs(self.v) <= math.abs(drag) then
 			self.v = 0
-			new_acce = {x = 0, y = 1, z = 0}
 		else
-			new_acce = {x = 0, y = -9.8, z = 0}
+			self.v = self.v - drag
 		end
-		new_velo = get_velocity(self.v, self.object:get_yaw(),
-			self.object:get_velocity().y)
+
+		local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
+		-- if not nodedef or not nodedef.walkable then --its air-like
+		-- 			end
+		new_acce = {x = 0, y = -9.81, z = 0}
+		new_velo = get_velocity(self.v, self.object:get_yaw(),	self.object:get_velocity().y + self.lift )
+
 		self.object:set_pos(self.object:get_pos())
+		
 	else
+
+		--apply drag
+		-- We need to preserve velocity sign to properly apply drag force
+		-- while moving backward
+		local drag = dtime * math.sign(self.v) * (0.01 + 0.0996 * self.v * self.v)
+		-- If drag is larger than velocity, then stop horizontal movement
+		if math.abs(self.v) <= math.abs(drag) then
+			self.v = 0
+		else
+			self.v = self.v - drag
+		end
+
+
+
 		p.y = p.y + 1
+
+
+
 		if is_water(p) then
+
+			
+
+
+
 			local y = self.object:get_velocity().y
 			if y >= 5 then
 				y = 5
 			elseif y < 0 then
-				new_acce = {x = 0, y = 20, z = 0}
+				new_acce = {x = 0, y = 15, z = 0}
 			else
 				new_acce = {x = 0, y = 5, z = 0}
 			end
+			self.v = self.v
 			new_velo = get_velocity(self.v, self.object:get_yaw(), y)
 			self.object:set_pos(self.object:get_pos())
 		else
