@@ -51,7 +51,7 @@ local plane = {
 		visual = "mesh",
         visual_size = {x=5,y=5,z=5},
 		mesh = "plane.b3d",
-		textures = {"Plane_Rivits.png","Plane_Windows.png","Propeler.png","Plane_Landing.png"},
+		textures = {"plane_rivits.png","plane_window.png","plane_propeller.png","plane_landing.png"},
 	},
 
 	driver = nil,
