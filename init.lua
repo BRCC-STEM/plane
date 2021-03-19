@@ -49,9 +49,9 @@ local plane = {
 		-- lowering it causes the boat to fall through the world if underwater
 		collisionbox = {-0.5, -0.35, -0.5, 0.5, 0.3, 0.5},
 		visual = "mesh",
-        visual_size = {x=5,y=20,z=5},
+        visual_size = {x=5,y=5,z=5},
 		mesh = "plane.b3d",
-		textures = {"plane_window.png","plane_rivets.png","plane_propeller.png","plane_landing.png"},
+		textures = {"Plane_Rivits.png","Plane_Windows.png","Propeler.png","Plane_Landing.png"},
 	},
 
 	driver = nil,
@@ -189,14 +189,16 @@ function plane.on_step(self, dtime)
 				end
 			end
 			if ctrl.jump then
-				self.lift = self.lift + self.v * dtime * 30
+				self.lift = self.lift + self.v * dtime * 0.1
 			elseif ctrl.sneak then
-				self.lift = self.lift - dtime * 30
+				self.lift = self.lift - dtime * 0.2
 			end
 			if self.v < .001 then 
 				self.lift = 0
 			end
-
+			if self.lift > 1 then
+				self.lift = 1
+			end
 		end
 	end
 	local velo = self.object:get_velocity()
@@ -228,10 +230,10 @@ function plane.on_step(self, dtime)
 		-- if not nodedef or not nodedef.walkable then --its air-like
 		-- 			end
 		new_acce = {x = 0, y = -9.81, z = 0}
-		new_velo = get_velocity(self.v, self.object:get_yaw(),	self.object:get_velocity().y + self.lift )
+		new_velo = get_velocity(self.v, self.object:get_yaw(),	self.object:get_velocity().y / 2 + self.lift )
 
 		self.object:set_pos(self.object:get_pos())
-		
+	
 	else
 
 		--apply drag
@@ -258,7 +260,7 @@ function plane.on_step(self, dtime)
 
 
 			local y = self.object:get_velocity().y
-			if y >= 5 then
+			if y > 5 then
 				y = 5
 			elseif y < 0 then
 				new_acce = {x = 0, y = 15, z = 0}
