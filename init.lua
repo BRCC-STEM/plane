@@ -94,7 +94,6 @@ function plane.on_rightclick(self, clicker)
 		self.driver = name
 		clicker:set_attach(self.object, "",
 			{x = 0.5, y = 1, z = -3}, {x = 0, y = 0, z = 0})
-		clicker: set_properties({visual_size = {x=1, y=1},}) 
 		player_api.player_attached[name] = true
 		minetest.after(0.2, function()
 			player_api.set_animation(clicker, "sit" , 30)
@@ -212,11 +211,9 @@ function plane.on_step(self, dtime)
 
 
 	local p = self.object:get_pos()
-	p.y = p.y - 0.5 --?
 	local new_velo
 	local new_acce = {x = 0, y = 0, z = 0}
 	if not is_water(p) then
-
 		-- We need to preserve velocity sign to properly apply drag force
 		-- while moving backward
 		local drag = dtime * math.sign(self.v) * (0.01 + 0.045 * self.v * self.v)
@@ -230,11 +227,12 @@ function plane.on_step(self, dtime)
 		local nodedef = minetest.registered_nodes[minetest.get_node(p).name]
 		-- if not nodedef or not nodedef.walkable then --its air-like
 		-- 			end
+		
 		new_acce = {x = 0, y = -9.81, z = 0}
 		new_velo = get_velocity(self.v, self.object:get_yaw(),	self.object:get_velocity().y / 2 + self.lift )
 
 		self.object:set_pos(self.object:get_pos())
-	
+		p.y = p.y + 0.5
 	else
 
 		--apply drag
