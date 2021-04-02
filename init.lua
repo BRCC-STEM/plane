@@ -229,7 +229,7 @@ function plane.on_step(self, dtime)
 		-- 			end
 		
 		new_acce = {x = 0, y = -9.81, z = 0}
-		new_velo = get_velocity(self.v, self.object:get_yaw(),	self.object:get_velocity().y / 2 + self.lift )
+		new_velo = get_velocity(self.v, self.object:get_yaw(),	self.object:get_velocity().y * dtime + self.lift )
 
 		self.object:set_pos(self.object:get_pos())
 		p.y = p.y + 0.5
