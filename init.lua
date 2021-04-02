@@ -196,8 +196,8 @@ function plane.on_step(self, dtime)
 			if self.v < .001 then 
 				self.lift = 0
 			end
-			if self.lift > 1 then
-				self.lift = 1
+			if self.lift > 3 then
+				self.lift = 3
 			end
 		end
 	end
